@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Paperclip, ArrowUp, Square, Slash } from "lucide-react";
-import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const SLASH_COMMANDS = [
@@ -20,7 +19,6 @@ export function Composer({
   const [showSlash, setShowSlash] = useState(false);
   const [slashIdx, setSlashIdx] = useState(0);
   const ref = useRef<HTMLTextAreaElement>(null);
-  const model = useStore((s) => s.settings.model);
 
   useEffect(() => { ref.current?.focus(); }, []);
 
@@ -47,7 +45,7 @@ export function Composer({
         {showSlash && filtered.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
-            className="absolute bottom-full left-0 mb-2 w-72 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-elevated"
+            className="glass-strong absolute bottom-full left-0 mb-2 w-72 overflow-hidden rounded-2xl p-1"
           >
             {filtered.map((c, i) => (
               <button
@@ -55,10 +53,10 @@ export function Composer({
                 onClick={() => { setVal(c.cmd + " "); setShowSlash(false); ref.current?.focus(); }}
                 className={cn(
                   "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm",
-                  i === slashIdx ? "bg-accent" : "hover:bg-accent/60"
+                  i === slashIdx ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
                 )}
               >
-                <span className="font-mono text-neon">{c.cmd}</span>
+                <span className="font-mono text-primary">{c.cmd}</span>
                 <span className="text-xs text-muted-foreground">{c.desc}</span>
               </button>
             ))}
@@ -66,12 +64,12 @@ export function Composer({
         )}
       </AnimatePresence>
 
-      <div className="glass-strong rounded-2xl p-2 shadow-elevated focus-within:neon-ring transition">
+      <div className="glass-strong rounded-3xl p-2 transition focus-within:border-white/[0.14]">
         <textarea
           ref={ref}
           rows={1}
           value={val}
-          placeholder="Message Hermes…  (try /skills)"
+          placeholder="Message Hermes…"
           onChange={(e) => {
             setVal(e.target.value);
             setShowSlash(e.target.value.startsWith("/"));
@@ -92,39 +90,30 @@ export function Composer({
         />
         <div className="flex items-center justify-between gap-2 px-1.5 pb-0.5 pt-1">
           <div className="flex items-center gap-1">
-            <button title="Attach" className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+            <button title="Attach" className="rounded-md p-1.5 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground">
               <Paperclip className="h-4 w-4" />
             </button>
             <button title="Slash commands" onClick={() => { setVal("/"); setShowSlash(true); ref.current?.focus(); }}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground">
               <Slash className="h-4 w-4" />
             </button>
-            <div className="ml-1 flex items-center gap-1.5 rounded-md border border-border/60 bg-surface/60 px-2 py-1 font-mono text-[10.5px] text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-neon shadow-glow" />
-              {model}
-            </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10.5px] text-muted-foreground">
               {val.length} chars · ~{Math.ceil(val.length / 4)} tok
             </span>
             {busy ? (
-              <button onClick={onStop} className="grid h-8 w-8 place-items-center rounded-lg bg-destructive text-destructive-foreground hover:opacity-90">
+              <button onClick={onStop} className="grid h-8 w-8 place-items-center rounded-xl bg-destructive text-destructive-foreground hover:opacity-90">
                 <Square className="h-3.5 w-3.5" />
               </button>
             ) : (
               <button onClick={submit} disabled={!val.trim()}
-                className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-primary to-cyber text-primary-foreground shadow-glow transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40">
+                className="grid h-8 w-8 place-items-center rounded-xl border border-white/[0.10] bg-white/[0.10] text-foreground transition hover:bg-white/[0.16] disabled:cursor-not-allowed disabled:opacity-40">
                 <ArrowUp className="h-4 w-4" />
               </button>
             )}
           </div>
         </div>
-      </div>
-      <div className="mt-2 px-2 text-center text-[10.5px] text-muted-foreground">
-        <kbd className="rounded bg-surface px-1.5 py-0.5 font-mono">↵</kbd> send ·{" "}
-        <kbd className="rounded bg-surface px-1.5 py-0.5 font-mono">⇧↵</kbd> newline ·{" "}
-        <kbd className="rounded bg-surface px-1.5 py-0.5 font-mono">⌘K</kbd> command palette
       </div>
     </div>
   );
