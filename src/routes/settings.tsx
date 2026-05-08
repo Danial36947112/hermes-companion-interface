@@ -74,7 +74,7 @@ function ConnectionCard() {
       </div>
       <Button
         onClick={() => { setSettings({ baseUrl: base, apiKey: key }); toast.success("Connection saved"); }}
-        className="bg-gradient-to-r from-primary to-cyber"
+        className="bg-white/[0.08] hover:bg-white/[0.14] border border-white/10"
       >
         <Save className="mr-2 h-4 w-4" /> Save
       </Button>

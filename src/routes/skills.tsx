@@ -28,7 +28,7 @@ function SkillsPage() {
               <h1 className="text-2xl font-semibold tracking-tight">Skills Library</h1>
               <p className="mt-1 text-sm text-muted-foreground">Compose Hermes' capabilities. Toggle, create, version.</p>
             </div>
-            <Button className="bg-gradient-to-r from-primary to-cyber"><Plus className="mr-2 h-4 w-4" /> New skill</Button>
+            <Button className="bg-white/[0.08] hover:bg-white/[0.14] border border-white/10"><Plus className="mr-2 h-4 w-4" /> New skill</Button>
           </div>
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {SKILLS.map((s) => (

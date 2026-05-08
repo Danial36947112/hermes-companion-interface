@@ -13,6 +13,9 @@ import {
   Sparkles,
   Brain,
   Edit3,
+  PanelLeftClose,
+  PanelLeftOpen,
+  MessageSquare,
 } from "lucide-react";
 import { useStore, type Session } from "@/lib/store";
 import { Button } from "@/components/ui/button";
@@ -30,6 +33,8 @@ type Filter = "all" | "today" | "pinned" | "archived";
 export function LeftSidebar() {
   const sessions = useStore((s) => s.sessions);
   const activeId = useStore((s) => s.activeId);
+  const collapsed = useStore((s) => s.leftCollapsed);
+  const toggle = useStore((s) => s.toggleLeft);
   const select = useStore((s) => s.selectSession);
   const create = useStore((s) => s.createSession);
   const del = useStore((s) => s.deleteSession);
@@ -56,31 +61,83 @@ export function LeftSidebar() {
       .sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned) || b.updatedAt - a.updatedAt);
   }, [sessions, q, filter]);
 
+  if (collapsed) {
+    return (
+      <aside className="glass relative z-20 flex h-full w-14 shrink-0 flex-col items-center py-3 hairline-r">
+        <button
+          onClick={toggle}
+          title="Expand sidebar (⌘B)"
+          className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+        >
+          <PanelLeftOpen className="h-4 w-4" />
+        </button>
+        <div className="my-2 h-px w-6 bg-white/[0.06]" />
+        <button
+          onClick={() => create()}
+          title="New session (⌘N)"
+          className="grid h-9 w-9 place-items-center rounded-xl bg-white/[0.06] text-foreground transition hover:bg-white/[0.12]"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        <div className="scrollbar-thin mt-3 flex w-full flex-1 flex-col items-center gap-1 overflow-y-auto px-1.5">
+          {sessions.slice(0, 10).map((s) => (
+            <button
+              key={s.id}
+              onClick={() => select(s.id)}
+              title={s.title}
+              className={cn(
+                "grid h-8 w-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-white/5 hover:text-foreground",
+                s.id === activeId && "bg-white/[0.08] text-foreground"
+              )}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+            </button>
+          ))}
+        </div>
+        <div className="mt-auto flex flex-col items-center gap-1 pt-2">
+          <IconLink to="/skills" icon={Sparkles} label="Skills" active={path === "/skills"} />
+          <IconLink to="/memory" icon={Brain} label="Memory" active={path === "/memory"} />
+          <IconLink to="/settings" icon={SettingsIcon} label="Settings" active={path === "/settings"} />
+        </div>
+      </aside>
+    );
+  }
+
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+    <aside className="glass relative z-20 flex h-full w-72 shrink-0 flex-col text-sidebar-foreground hairline-r">
       {/* Brand */}
-      <div className="flex items-center gap-2 px-4 pt-4 pb-3">
-        <div className="relative grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-primary via-cyber to-neon shadow-glow">
-          <span className="font-mono text-sm font-bold text-primary-foreground">H</span>
+      <div className="flex items-center justify-between gap-2 px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="grid h-7 w-7 place-items-center rounded-lg border border-white/10 bg-white/[0.06]">
+            <span className="font-mono text-[11px] font-semibold tracking-tight text-foreground">H</span>
+          </div>
+          <div className="flex flex-col leading-tight">
+            <span className="text-sm font-medium tracking-tight">Hermes</span>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+              Companion
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold tracking-tight gradient-text">Hermes</span>
-          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-            Companion
-          </span>
-        </div>
+        <button
+          onClick={toggle}
+          title="Collapse (⌘B)"
+          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+        >
+          <PanelLeftClose className="h-3.5 w-3.5" />
+        </button>
       </div>
 
       {/* New */}
       <div className="px-3">
         <Button
           onClick={() => create()}
-          className="group h-9 w-full justify-between gap-2 bg-gradient-to-r from-primary/90 to-cyber/90 text-primary-foreground hover:from-primary hover:to-cyber"
+          variant="ghost"
+          className="group h-9 w-full justify-between gap-2 border border-white/[0.08] bg-white/[0.04] text-foreground hover:bg-white/[0.08]"
         >
           <span className="flex items-center gap-2">
             <Plus className="h-4 w-4" /> New session
           </span>
-          <kbd className="rounded bg-black/20 px-1.5 py-0.5 font-mono text-[10px] text-primary-foreground/80">
+          <kbd className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
             ⌘N
           </kbd>
         </Button>
@@ -94,7 +151,7 @@ export function LeftSidebar() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search sessions…"
-            className="h-9 border-border/60 bg-surface/60 pl-8 text-sm"
+            className="h-9 border-white/[0.06] bg-white/[0.03] pl-8 text-sm"
           />
         </div>
       </div>
@@ -108,7 +165,7 @@ export function LeftSidebar() {
             className={cn(
               "rounded-md px-2 py-1 capitalize transition",
               filter === f
-                ? "bg-accent text-accent-foreground"
+                ? "bg-white/[0.08] text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -147,13 +204,30 @@ export function LeftSidebar() {
       </div>
 
       {/* Footer nav */}
-      <div className="border-t border-sidebar-border p-2">
+      <div className="hairline-t p-2">
         <FooterLink to="/" icon={LayoutDashboard} label="Dashboard" />
         <FooterLink to="/skills" icon={Sparkles} label="Skills" />
         <FooterLink to="/memory" icon={Brain} label="Memory" />
         <FooterLink to="/settings" icon={SettingsIcon} label="Settings" />
       </div>
     </aside>
+  );
+}
+
+function IconLink({
+  to, icon: Icon, label, active,
+}: { to: string; icon: React.ComponentType<{ className?: string }>; label: string; active: boolean }) {
+  return (
+    <Link
+      to={to}
+      title={label}
+      className={cn(
+        "grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition hover:bg-white/5 hover:text-foreground",
+        active && "bg-white/[0.08] text-foreground"
+      )}
+    >
+      <Icon className="h-4 w-4" />
+    </Link>
   );
 }
 
@@ -168,8 +242,8 @@ function FooterLink({
       className={cn(
         "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition",
         active
-          ? "bg-accent text-accent-foreground"
-          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+          ? "bg-white/[0.06] text-foreground"
+          : "text-muted-foreground hover:bg-white/[0.04] hover:text-foreground"
       )}
     >
       <Icon className="h-4 w-4" />
@@ -192,15 +266,15 @@ function SessionRow({
       layout
       initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
       className={cn(
-        "group relative mb-1 rounded-lg border border-transparent px-2.5 py-2 transition",
+        "group relative mb-1 rounded-lg px-2.5 py-2 transition",
         active
-          ? "border-border/80 bg-surface-elevated shadow-elevated"
-          : "hover:bg-surface/60"
+          ? "bg-white/[0.06]"
+          : "hover:bg-white/[0.03]"
       )}
     >
       <Link to="/" onClick={onSelect} className="block">
         <div className="flex items-center gap-1.5">
-          {session.pinned && <Pin className="h-3 w-3 shrink-0 text-neon" />}
+          {session.pinned && <Pin className="h-3 w-3 shrink-0 text-primary" />}
           {editing ? (
             <input
               autoFocus
@@ -224,7 +298,7 @@ function SessionRow({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="absolute right-1.5 top-1.5 rounded p-1 text-muted-foreground opacity-0 transition hover:bg-accent hover:text-foreground group-hover:opacity-100"
+            className="absolute right-1.5 top-1.5 rounded p-1 text-muted-foreground opacity-0 transition hover:bg-white/[0.08] hover:text-foreground group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreHorizontal className="h-3.5 w-3.5" />
@@ -254,14 +328,26 @@ function timeAgo(t: number) {
 // Cmd+N shortcut
 export function useNewSessionShortcut() {
   const create = useStore((s) => s.createSession);
+  const toggleLeft = useStore((s) => s.toggleLeft);
+  const toggleRight = useStore((s) => s.toggleRight);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "n") {
+      const meta = e.metaKey || e.ctrlKey;
+      if (meta && e.key.toLowerCase() === "n") {
         e.preventDefault();
         create();
+      } else if (meta && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleLeft();
+      } else if (meta && e.shiftKey && e.key.toLowerCase() === "b") {
+        e.preventDefault();
+        toggleRight();
+      } else if (meta && e.key === ".") {
+        e.preventDefault();
+        toggleRight();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [create]);
+  }, [create, toggleLeft, toggleRight]);
 }

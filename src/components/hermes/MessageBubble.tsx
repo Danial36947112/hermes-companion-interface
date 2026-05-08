@@ -26,7 +26,10 @@ export function MessageBubble({
         animate={{ opacity: 1, y: 0 }}
         className="group flex justify-end"
       >
-        <div className="max-w-[75%] rounded-2xl rounded-tr-md bg-primary px-4 py-2.5 text-primary-foreground shadow-elevated">
+        <div
+          className="max-w-[78%] rounded-2xl rounded-tr-md border border-white/[0.10] bg-white/[0.08] px-4 py-2.5 text-foreground"
+          style={{ backdropFilter: "blur(20px) saturate(160%)" }}
+        >
           <div className="whitespace-pre-wrap text-[14.5px] leading-relaxed">
             {message.content}
           </div>
@@ -41,34 +44,41 @@ export function MessageBubble({
       animate={{ opacity: 1, y: 0 }}
       className="group flex gap-3"
     >
-      <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary via-cyber to-neon text-primary-foreground shadow-glow">
-        <span className="font-mono text-xs font-bold">H</span>
+      <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-white/[0.10] bg-white/[0.04] text-foreground">
+        <span className="font-mono text-[10px] font-semibold">H</span>
       </div>
       <div className="min-w-0 flex-1">
         {message.tools?.map((t) => <ToolBadge key={t.id} tool={t} />)}
         {message.content ? (
-          <div className="prose prose-invert prose-sm max-w-none prose-pre:my-2 prose-pre:bg-transparent prose-pre:p-0 prose-p:leading-relaxed prose-headings:mb-2 prose-code:rounded prose-code:bg-surface prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.85em] prose-code:before:content-[''] prose-code:after:content-['']">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkMath]}
-              rehypePlugins={[rehypeKatex]}
-              components={{
-                pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
-                a: ({ href, children }) => (
-                  <a href={href} target="_blank" rel="noreferrer" className="text-neon hover:underline">
-                    {children}
-                  </a>
-                ),
-              }}
-            >
-              {message.content}
-            </ReactMarkdown>
+          <div
+            className="rounded-2xl rounded-tl-md border border-white/[0.06] bg-white/[0.02] px-4 py-2.5"
+            style={{ backdropFilter: "blur(16px) saturate(140%)" }}
+          >
+            <div className="prose prose-invert prose-sm max-w-none prose-pre:my-2 prose-pre:bg-transparent prose-pre:p-0 prose-p:leading-relaxed prose-headings:mb-2 prose-code:rounded prose-code:bg-white/[0.06] prose-code:px-1 prose-code:py-0.5 prose-code:font-mono prose-code:text-[0.85em] prose-code:before:content-[''] prose-code:after:content-['']">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+                components={{
+                  pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
+                  a: ({ href, children }) => (
+                    <a href={href} target="_blank" rel="noreferrer" className="text-primary hover:underline">
+                      {children}
+                    </a>
+                  ),
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+            {message.streaming && (
+              <span className="ml-2 mt-1 inline-block h-3.5 w-1 translate-y-0.5 animate-pulse rounded-sm bg-primary" />
+            )}
           </div>
         ) : message.streaming ? (
-          <TypingDots />
+          <div className="rounded-2xl rounded-tl-md border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+            <TypingDots />
+          </div>
         ) : null}
-        {message.streaming && message.content && (
-          <span className="ml-0.5 inline-block h-4 w-1.5 translate-y-0.5 animate-pulse rounded-sm bg-neon" />
-        )}
         {!message.streaming && message.content && (
           <div className="mt-1.5 flex gap-0.5 opacity-0 transition group-hover:opacity-100">
             <ActionBtn icon={Copy} label="Copy" onClick={() => navigator.clipboard.writeText(message.content)} />
@@ -93,9 +103,9 @@ function ActionBtn({
         if (label === "Copy") { setCopied(true); setTimeout(() => setCopied(false), 1200); }
       }}
       title={label}
-      className="rounded-md p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
+      className="rounded-md p-1.5 text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
     >
-      {copied && label === "Copy" ? <Check className="h-3.5 w-3.5 text-neon" /> : <Icon className="h-3.5 w-3.5" />}
+      {copied && label === "Copy" ? <Check className="h-3.5 w-3.5 text-primary" /> : <Icon className="h-3.5 w-3.5" />}
     </button>
   );
 }
@@ -103,16 +113,16 @@ function ActionBtn({
 function ToolBadge({ tool }: { tool: NonNullable<Message["tools"]>[number] }) {
   return (
     <div className={cn(
-      "mb-2 inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-3 py-1 text-[11px]",
+      "mb-2 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px]",
       tool.status === "running" && "shimmer"
     )}>
       {tool.status === "running" ? (
-        <Loader2 className="h-3 w-3 animate-spin text-neon" />
+        <Loader2 className="h-3 w-3 animate-spin text-primary" />
       ) : (
-        <Wrench className="h-3 w-3 text-neon" />
+        <Wrench className="h-3 w-3 text-primary" />
       )}
       <span className="font-mono text-muted-foreground">Using</span>
-      <span className="font-mono font-semibold">{tool.name}</span>
+      <span className="font-mono font-medium">{tool.name}</span>
       {tool.input && <span className="truncate text-muted-foreground">— {tool.input}</span>}
     </div>
   );
@@ -120,31 +130,30 @@ function ToolBadge({ tool }: { tool: NonNullable<Message["tools"]>[number] }) {
 
 function TypingDots() {
   return (
-    <div className="flex items-center gap-1 py-2">
-      <span className="typing-dot h-2 w-2 rounded-full bg-neon" />
-      <span className="typing-dot h-2 w-2 rounded-full bg-neon" />
-      <span className="typing-dot h-2 w-2 rounded-full bg-neon" />
+    <div className="flex items-center gap-1">
+      <span className="typing-dot h-1.5 w-1.5 rounded-full bg-primary" />
+      <span className="typing-dot h-1.5 w-1.5 rounded-full bg-primary" />
+      <span className="typing-dot h-1.5 w-1.5 rounded-full bg-primary" />
     </div>
   );
 }
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   const [copied, setCopied] = useState(false);
-  // Extract raw text for copy
   const code = extractText(children);
   return (
-    <div className="my-2 overflow-hidden rounded-lg border border-border/60 bg-[oklch(0.13_0.02_270)]">
-      <div className="flex items-center justify-between border-b border-border/60 bg-surface/60 px-3 py-1.5">
+    <div className="my-2 overflow-hidden rounded-xl border border-white/[0.08] bg-black/40">
+      <div className="flex items-center justify-between border-b border-white/[0.06] bg-white/[0.02] px-3 py-1.5">
         <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">code</span>
         <div className="flex gap-1">
           <button
             onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 1200); }}
-            className="flex items-center gap-1 rounded p-1 text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="flex items-center gap-1 rounded p-1 text-[10px] text-muted-foreground hover:bg-white/[0.06] hover:text-foreground"
           >
-            {copied ? <Check className="h-3 w-3 text-neon" /> : <Copy className="h-3 w-3" />}
+            {copied ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
             {copied ? "Copied" : "Copy"}
           </button>
-          <button className="flex items-center gap-1 rounded p-1 text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground">
+          <button className="flex items-center gap-1 rounded p-1 text-[10px] text-muted-foreground hover:bg-white/[0.06] hover:text-foreground">
             <Play className="h-3 w-3" /> Run
           </button>
         </div>
