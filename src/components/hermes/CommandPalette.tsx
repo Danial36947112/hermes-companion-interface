@@ -27,7 +27,7 @@ export function CommandPalette() {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-[15vh] backdrop-blur-sm" onClick={() => setOpen(false)}>
-      <div className="w-full max-w-xl rounded-2xl border border-border bg-popover shadow-elevated" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-xl rounded-2xl border border-border bg-popover border-white/10" onClick={(e) => e.stopPropagation()}>
         <Command label="Command palette" className="overflow-hidden rounded-2xl">
           <div className="flex items-center gap-2 border-b border-border px-4">
             <Search className="h-4 w-4 text-muted-foreground" />
