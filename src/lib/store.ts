@@ -43,6 +43,9 @@ export type Settings = {
 type Store = {
   sessions: Session[];
   activeId: string | null;
+  openTabs: string[];
+  leftCollapsed: boolean;
+  rightCollapsed: boolean;
   settings: Settings;
   // actions
   createSession: () => string;
@@ -54,6 +57,11 @@ type Store = {
   appendMessage: (sid: string, msg: Message) => void;
   updateMessage: (sid: string, mid: string, patch: Partial<Message>) => void;
   setSettings: (patch: Partial<Settings>) => void;
+  closeTab: (id: string) => void;
+  toggleLeft: () => void;
+  toggleRight: () => void;
+  setLeftCollapsed: (v: boolean) => void;
+  setRightCollapsed: (v: boolean) => void;
 };
 
 const defaultSettings: Settings = {
@@ -70,6 +78,9 @@ export const useStore = create<Store>()(
     (set, get) => ({
       sessions: [],
       activeId: null,
+      openTabs: [],
+      leftCollapsed: false,
+      rightCollapsed: false,
       settings: defaultSettings,
       createSession: () => {
         const s: Session = {
@@ -79,18 +90,42 @@ export const useStore = create<Store>()(
           updatedAt: Date.now(),
           messages: [],
         };
-        set((st) => ({ sessions: [s, ...st.sessions], activeId: s.id }));
+        set((st) => ({
+          sessions: [s, ...st.sessions],
+          activeId: s.id,
+          openTabs: st.openTabs.includes(s.id) ? st.openTabs : [...st.openTabs, s.id],
+        }));
         return s.id;
       },
-      selectSession: (id) => set({ activeId: id }),
+      selectSession: (id) =>
+        set((st) => ({
+          activeId: id,
+          openTabs: st.openTabs.includes(id) ? st.openTabs : [...st.openTabs, id],
+        })),
       deleteSession: (id) =>
         set((st) => {
           const sessions = st.sessions.filter((s) => s.id !== id);
+          const openTabs = st.openTabs.filter((t) => t !== id);
           return {
             sessions,
+            openTabs,
             activeId: st.activeId === id ? sessions[0]?.id ?? null : st.activeId,
           };
         }),
+      closeTab: (id) =>
+        set((st) => {
+          const openTabs = st.openTabs.filter((t) => t !== id);
+          let activeId = st.activeId;
+          if (activeId === id) {
+            const idx = st.openTabs.indexOf(id);
+            activeId = openTabs[idx] ?? openTabs[idx - 1] ?? openTabs[0] ?? null;
+          }
+          return { openTabs, activeId };
+        }),
+      toggleLeft: () => set((st) => ({ leftCollapsed: !st.leftCollapsed })),
+      toggleRight: () => set((st) => ({ rightCollapsed: !st.rightCollapsed })),
+      setLeftCollapsed: (v) => set({ leftCollapsed: v }),
+      setRightCollapsed: (v) => set({ rightCollapsed: v }),
       renameSession: (id, title) =>
         set((st) => ({
           sessions: st.sessions.map((s) => (s.id === id ? { ...s, title } : s)),
