@@ -78,9 +78,7 @@ function SkillsPage() {
                   <Switch
                     checked={s.on}
                     onCheckedChange={(v) => {
-                      setSkills((cur) => cur.map((x, j) => (cur.indexOf(s) === j ? { ...x, on: v } : x)));
-                      const idx = skills.findIndex((x) => x.name === s.name);
-                      setSkills((cur) => cur.map((x, j) => j === idx ? { ...x, on: v } : x));
+                      setSkills((cur) => cur.map((x) => x.name === s.name ? { ...x, on: v } : x));
                       toggleSkill(baseUrl, s.name);
                     }}
                   />
