@@ -358,10 +358,11 @@ function SessionRow({
             <MoreHorizontal className="h-3.5 w-3.5" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuContent align="end" className="w-44">
           <DropdownMenuItem onClick={onStartEdit}><Edit3 className="mr-2 h-4 w-4" /> Rename</DropdownMenuItem>
           <DropdownMenuItem onClick={onPin}><Pin className="mr-2 h-4 w-4" /> {session.pinned ? "Unpin" : "Pin"}</DropdownMenuItem>
           <DropdownMenuItem onClick={onArchive}><Archive className="mr-2 h-4 w-4" /> {session.archived ? "Unarchive" : "Archive"}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => exportSessionAsMarkdown(session)}><Download className="mr-2 h-4 w-4" /> Export</DropdownMenuItem>
           <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
             <Trash2 className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
