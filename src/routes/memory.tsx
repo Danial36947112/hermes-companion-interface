@@ -66,7 +66,7 @@ function MemoryPage() {
               />
               <Footer
                 dirty={memDirty}
-                onSave={async () => { const ok = await saveMemory(baseUrl, memory); setSavedMem(memory); setMemDirty(false); toast[ok ? "success" : "message"](ok ? "Memory saved" : "Saved locally"); }}
+                onSave={async () => { const ok = await saveMemory(baseUrl, memory); setSavedMem(memory); setMemDirty(false); toast.success(ok ? "Memory saved" : "Saved locally"); }}
                 onDiscard={() => { setMemory(savedMem); setMemDirty(false); }}
               />
             </TabsContent>
@@ -79,7 +79,7 @@ function MemoryPage() {
               />
               <Footer
                 dirty={userDirty}
-                onSave={async () => { const ok = await saveUserProfile(baseUrl, userText); setSavedUser(userText); setUserDirty(false); toast[ok ? "success" : "message"](ok ? "Profile saved" : "Saved locally"); }}
+                onSave={async () => { const ok = await saveUserProfile(baseUrl, userText); setSavedUser(userText); setUserDirty(false); toast.success(ok ? "Profile saved" : "Saved locally"); }}
                 onDiscard={() => { setUserText(savedUser); setUserDirty(false); }}
               />
             </TabsContent>
