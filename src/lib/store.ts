@@ -10,6 +10,7 @@ export type ToolCall = {
   status: "running" | "done" | "error";
   input?: string;
   output?: string;
+  approval?: "once" | "session" | "always" | "deny";
 };
 
 export type Message = {
@@ -31,6 +32,8 @@ export type Session = {
   messages: Message[];
 };
 
+export type Wallpaper = { type: "none" | "gradient" | "image"; value: string };
+
 export type Settings = {
   baseUrl: string;
   apiKey: string;
@@ -38,6 +41,7 @@ export type Settings = {
   auxModel: string;
   temperature: number;
   theme: "dark" | "light";
+  wallpaper: Wallpaper;
 };
 
 type Store = {
@@ -48,7 +52,7 @@ type Store = {
   rightCollapsed: boolean;
   settings: Settings;
   // actions
-  createSession: () => string;
+  createSession: (seed?: Partial<Session>) => string;
   selectSession: (id: string) => void;
   deleteSession: (id: string) => void;
   renameSession: (id: string, title: string) => void;
@@ -56,13 +60,52 @@ type Store = {
   archiveSession: (id: string) => void;
   appendMessage: (sid: string, msg: Message) => void;
   updateMessage: (sid: string, mid: string, patch: Partial<Message>) => void;
+  removeMessage: (sid: string, mid: string) => void;
+  truncateAfter: (sid: string, mid: string) => void;
   setSettings: (patch: Partial<Settings>) => void;
   closeTab: (id: string) => void;
   toggleLeft: () => void;
   toggleRight: () => void;
   setLeftCollapsed: (v: boolean) => void;
   setRightCollapsed: (v: boolean) => void;
+  clearAllSessions: () => void;
+  resetSettings: () => void;
 };
+
+export const DEFAULT_WALLPAPER: Wallpaper = {
+  type: "gradient",
+  value:
+    "radial-gradient(1000px 600px at 15% -10%, oklch(0.40 0.06 215 / 0.18), transparent 60%), radial-gradient(900px 500px at 100% 110%, oklch(0.35 0.05 210 / 0.10), transparent 60%), oklch(0.14 0.005 240)",
+};
+
+export const WALLPAPER_PRESETS: { name: string; value: string }[] = [
+  { name: "Default", value: DEFAULT_WALLPAPER.value },
+  {
+    name: "Aurora",
+    value:
+      "radial-gradient(900px 600px at 10% 0%, oklch(0.55 0.16 160 / 0.25), transparent 60%), radial-gradient(800px 500px at 90% 100%, oklch(0.50 0.18 200 / 0.20), transparent 60%), oklch(0.12 0.01 200)",
+  },
+  {
+    name: "Nebula",
+    value:
+      "radial-gradient(1100px 700px at 20% 20%, oklch(0.45 0.18 260 / 0.30), transparent 60%), radial-gradient(800px 500px at 100% 80%, oklch(0.50 0.20 320 / 0.18), transparent 60%), oklch(0.10 0.02 270)",
+  },
+  {
+    name: "Dusk",
+    value:
+      "radial-gradient(900px 600px at 80% 0%, oklch(0.65 0.18 50 / 0.22), transparent 60%), radial-gradient(800px 500px at 0% 100%, oklch(0.45 0.14 30 / 0.18), transparent 60%), oklch(0.13 0.02 40)",
+  },
+  {
+    name: "Deep Space",
+    value:
+      "radial-gradient(1000px 600px at 50% 10%, oklch(0.30 0.08 240 / 0.30), transparent 60%), radial-gradient(700px 500px at 90% 100%, oklch(0.25 0.10 280 / 0.18), transparent 60%), oklch(0.08 0.01 240)",
+  },
+  {
+    name: "Mono",
+    value:
+      "radial-gradient(900px 600px at 10% 0%, oklch(0.30 0 0 / 0.30), transparent 60%), oklch(0.10 0 0)",
+  },
+];
 
 const defaultSettings: Settings = {
   baseUrl: "https://api.openai.com/v1",
@@ -71,24 +114,26 @@ const defaultSettings: Settings = {
   auxModel: "Hermes-3-8B",
   temperature: 0.7,
   theme: "dark",
+  wallpaper: DEFAULT_WALLPAPER,
 };
 
 export const useStore = create<Store>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       sessions: [],
       activeId: null,
       openTabs: [],
       leftCollapsed: false,
       rightCollapsed: false,
       settings: defaultSettings,
-      createSession: () => {
+      createSession: (seed) => {
         const s: Session = {
           id: nanoid(),
           title: "New conversation",
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messages: [],
+          ...seed,
         };
         set((st) => ({
           sessions: [s, ...st.sessions],
@@ -147,7 +192,8 @@ export const useStore = create<Store>()(
                   messages: [...s.messages, msg],
                   updatedAt: Date.now(),
                   title:
-                    s.messages.length === 0 && msg.role === "user"
+                    (s.messages.length === 0 || s.title === "New conversation") &&
+                    msg.role === "user"
                       ? msg.content.slice(0, 48)
                       : s.title,
                 }
@@ -165,7 +211,26 @@ export const useStore = create<Store>()(
               : s
           ),
         })),
+      removeMessage: (sid, mid) =>
+        set((st) => ({
+          sessions: st.sessions.map((s) =>
+            s.id === sid
+              ? { ...s, messages: s.messages.filter((m) => m.id !== mid) }
+              : s
+          ),
+        })),
+      truncateAfter: (sid, mid) =>
+        set((st) => ({
+          sessions: st.sessions.map((s) => {
+            if (s.id !== sid) return s;
+            const idx = s.messages.findIndex((m) => m.id === mid);
+            if (idx < 0) return s;
+            return { ...s, messages: s.messages.slice(0, idx + 1) };
+          }),
+        })),
       setSettings: (patch) => set((st) => ({ settings: { ...st.settings, ...patch } })),
+      clearAllSessions: () => set({ sessions: [], openTabs: [], activeId: null }),
+      resetSettings: () => set({ settings: defaultSettings }),
     }),
     { name: "hermes-webui" }
   )
