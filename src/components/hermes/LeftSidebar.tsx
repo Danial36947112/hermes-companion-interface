@@ -16,8 +16,10 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   MessageSquare,
+  Download,
+  Upload,
 } from "lucide-react";
-import { useStore, type Session } from "@/lib/store";
+import { useStore, type Session, newId, type Message } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
