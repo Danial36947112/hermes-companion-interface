@@ -63,7 +63,7 @@ function SkillsPage() {
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
-            {filtered.map((s, i) => (
+            {filtered.map((s) => (
               <div key={s.name} className="glass-soft group rounded-2xl p-5 transition hover:border-white/[0.14]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
