@@ -16,8 +16,10 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   MessageSquare,
+  Download,
+  Upload,
 } from "lucide-react";
-import { useStore, type Session } from "@/lib/store";
+import { useStore, type Session, newId, type Message } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -209,8 +211,60 @@ export function LeftSidebar() {
         <FooterLink to="/skills" icon={Sparkles} label="Skills" />
         <FooterLink to="/memory" icon={Brain} label="Memory" />
         <FooterLink to="/settings" icon={SettingsIcon} label="Settings" />
+        <ImportButton />
       </div>
     </aside>
+  );
+}
+
+function ImportButton() {
+  const create = useStore((s) => s.createSession);
+  return (
+    <label className="flex cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-2 text-xs text-muted-foreground transition hover:bg-white/[0.04] hover:text-foreground">
+      <Upload className="h-3.5 w-3.5" />
+      Import session
+      <input
+        type="file"
+        accept=".json,.md,application/json,text/markdown"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const text = await file.text();
+          try {
+            if (file.name.endsWith(".json")) {
+              const data = JSON.parse(text);
+              const messages: Message[] = (data.messages ?? []).map((m: any) => ({
+                id: newId(),
+                role: m.role ?? "user",
+                content: m.content ?? "",
+                createdAt: m.createdAt ?? Date.now(),
+              }));
+              create({ title: data.title ?? file.name.replace(/\.json$/, ""), messages });
+            } else {
+              // .md: split into User/Hermes blocks
+              const messages: Message[] = [];
+              const blocks = text.split(/\n(?=\*\*(?:User|Hermes):\*\*)/g);
+              for (const b of blocks) {
+                const m = b.match(/^\*\*(User|Hermes):\*\*\s*([\s\S]*)$/);
+                if (m) {
+                  messages.push({
+                    id: newId(),
+                    role: m[1] === "User" ? "user" : "assistant",
+                    content: m[2].trim(),
+                    createdAt: Date.now(),
+                  });
+                }
+              }
+              create({ title: file.name.replace(/\.md$/, ""), messages });
+            }
+          } catch {
+            // ignore bad imports
+          }
+          e.target.value = "";
+        }}
+      />
+    </label>
   );
 }
 
@@ -304,10 +358,11 @@ function SessionRow({
             <MoreHorizontal className="h-3.5 w-3.5" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
+        <DropdownMenuContent align="end" className="w-44">
           <DropdownMenuItem onClick={onStartEdit}><Edit3 className="mr-2 h-4 w-4" /> Rename</DropdownMenuItem>
           <DropdownMenuItem onClick={onPin}><Pin className="mr-2 h-4 w-4" /> {session.pinned ? "Unpin" : "Pin"}</DropdownMenuItem>
           <DropdownMenuItem onClick={onArchive}><Archive className="mr-2 h-4 w-4" /> {session.archived ? "Unarchive" : "Archive"}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => exportSessionAsMarkdown(session)}><Download className="mr-2 h-4 w-4" /> Export</DropdownMenuItem>
           <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
             <Trash2 className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
@@ -315,6 +370,20 @@ function SessionRow({
       </DropdownMenu>
     </motion.div>
   );
+}
+
+function exportSessionAsMarkdown(session: Session) {
+  const lines = [`# ${session.title}`, ""];
+  for (const m of session.messages) {
+    lines.push(`**${m.role === "user" ? "User" : "Hermes"}:** ${m.content}`, "");
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${session.title.replace(/[^\w\-]+/g, "_")}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function timeAgo(t: number) {

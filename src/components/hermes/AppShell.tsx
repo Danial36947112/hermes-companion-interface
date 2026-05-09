@@ -9,8 +9,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   useNewSessionShortcut();
   const setLeft = useStore((s) => s.setLeftCollapsed);
   const setRight = useStore((s) => s.setRightCollapsed);
+  const wallpaper = useStore((s) => s.settings.wallpaper);
 
-  // Auto-collapse on small screens
   useEffect(() => {
     if (typeof window === "undefined") return;
     const apply = () => {
@@ -22,15 +22,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", apply);
   }, [setLeft, setRight]);
 
+  const wpStyle: React.CSSProperties =
+    wallpaper.type === "image"
+      ? {
+          backgroundImage: `url(${wallpaper.value})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }
+      : wallpaper.type === "gradient"
+      ? { background: wallpaper.value }
+      : {};
+
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
-      <LeftSidebar />
-      <div className="flex h-full min-w-0 flex-1 flex-col">
-        <TopBar />
-        <main className="flex min-h-0 flex-1">{children}</main>
+    <div className="relative flex h-screen w-full overflow-hidden bg-background">
+      {/* Wallpaper layer */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0"
+        style={wpStyle}
+      />
+      <div className="relative z-10 flex h-full w-full">
+        <LeftSidebar />
+        <div className="flex h-full min-w-0 flex-1 flex-col">
+          <TopBar />
+          <main className="flex min-h-0 flex-1">{children}</main>
+        </div>
+        <RightSidebar />
+        <CommandPalette />
       </div>
-      <RightSidebar />
-      <CommandPalette />
     </div>
   );
 }
