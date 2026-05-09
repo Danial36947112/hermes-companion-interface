@@ -372,6 +372,20 @@ function SessionRow({
   );
 }
 
+function exportSessionAsMarkdown(session: Session) {
+  const lines = [`# ${session.title}`, ""];
+  for (const m of session.messages) {
+    lines.push(`**${m.role === "user" ? "User" : "Hermes"}:** ${m.content}`, "");
+  }
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${session.title.replace(/[^\w\-]+/g, "_")}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function timeAgo(t: number) {
   const s = Math.floor((Date.now() - t) / 1000);
   if (s < 60) return "just now";
