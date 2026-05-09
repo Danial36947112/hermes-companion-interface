@@ -76,3 +76,68 @@ function craftMockReply(prompt: string) {
 export function toApiMessages(msgs: Message[]) {
   return msgs.map((m) => ({ role: m.role, content: m.content }));
 }
+
+// ---- Optional Hermes Agent gateway endpoints (silent fallback) ----
+
+export type FileNode = { name: string; file?: boolean; children?: FileNode[] };
+export type SkillEntry = { name: string; desc: string; on: boolean; origin?: "built-in" | "learned" | "custom" };
+
+function base(u: string) { return u.replace(/\/$/, ""); }
+
+async function safeJson<T>(p: Promise<Response>): Promise<T | null> {
+  try {
+    const r = await p;
+    if (!r.ok) return null;
+    return (await r.json()) as T;
+  } catch { return null; }
+}
+
+export async function fetchSkills(baseUrl: string): Promise<SkillEntry[] | null> {
+  if (!baseUrl) return null;
+  return safeJson<SkillEntry[]>(fetch(`${base(baseUrl)}/skills`));
+}
+
+export async function toggleSkill(baseUrl: string, name: string): Promise<void> {
+  if (!baseUrl) return;
+  try { await fetch(`${base(baseUrl)}/skills/${encodeURIComponent(name)}/toggle`, { method: "POST" }); } catch { /* noop */ }
+}
+
+export async function fetchMemory(baseUrl: string): Promise<string | null> {
+  if (!baseUrl) return null;
+  try {
+    const r = await fetch(`${base(baseUrl)}/memory`);
+    if (!r.ok) return null;
+    return await r.text();
+  } catch { return null; }
+}
+
+export async function saveMemory(baseUrl: string, content: string): Promise<boolean> {
+  if (!baseUrl) return false;
+  try {
+    const r = await fetch(`${base(baseUrl)}/memory`, { method: "PUT", headers: { "Content-Type": "text/plain" }, body: content });
+    return r.ok;
+  } catch { return false; }
+}
+
+export async function fetchUserProfile(baseUrl: string): Promise<string | null> {
+  if (!baseUrl) return null;
+  try {
+    const r = await fetch(`${base(baseUrl)}/user-profile`);
+    if (!r.ok) return null;
+    return await r.text();
+  } catch { return null; }
+}
+
+export async function saveUserProfile(baseUrl: string, content: string): Promise<boolean> {
+  if (!baseUrl) return false;
+  try {
+    const r = await fetch(`${base(baseUrl)}/user-profile`, { method: "PUT", headers: { "Content-Type": "text/plain" }, body: content });
+    return r.ok;
+  } catch { return false; }
+}
+
+export async function fetchFiles(baseUrl: string): Promise<FileNode[] | null> {
+  if (!baseUrl) return null;
+  return safeJson<FileNode[]>(fetch(`${base(baseUrl)}/files`));
+}
+
