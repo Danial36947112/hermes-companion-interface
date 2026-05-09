@@ -12,9 +12,16 @@ const SLASH_COMMANDS = [
   { cmd: "/branch", desc: "Branch this conversation" },
 ];
 
+const CONTEXT_LIMIT = 8000;
+
 export function Composer({
-  onSend, busy, onStop,
-}: { onSend: (text: string) => void; busy: boolean; onStop: () => void }) {
+  onSend, busy, onStop, contextTokens = 0,
+}: {
+  onSend: (text: string) => void;
+  busy: boolean;
+  onStop: () => void;
+  contextTokens?: number;
+}) {
   const [val, setVal] = useState("");
   const [showSlash, setShowSlash] = useState(false);
   const [slashIdx, setSlashIdx] = useState(0);
@@ -38,6 +45,9 @@ export function Composer({
     onSend(val.trim());
     setVal("");
   }
+
+  const draftTokens = Math.ceil(val.length / 4);
+  const totalTokens = contextTokens + draftTokens;
 
   return (
     <div className="relative">
@@ -98,10 +108,11 @@ export function Composer({
               <Slash className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <span className="font-mono text-[10.5px] text-muted-foreground">
-              {val.length} chars · ~{Math.ceil(val.length / 4)} tok
+              {val.length} chars · ~{draftTokens} tok
             </span>
+            <ContextRing tokens={totalTokens} limit={CONTEXT_LIMIT} />
             {busy ? (
               <button onClick={onStop} className="grid h-8 w-8 place-items-center rounded-xl bg-destructive text-destructive-foreground hover:opacity-90">
                 <Square className="h-3.5 w-3.5" />
@@ -115,6 +126,37 @@ export function Composer({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ContextRing({ tokens, limit }: { tokens: number; limit: number }) {
+  const pct = Math.min(1, tokens / limit);
+  const r = 11;
+  const c = 2 * Math.PI * r;
+  const offset = c * (1 - pct);
+  const color =
+    pct >= 0.9 ? "var(--destructive)"
+    : pct >= 0.7 ? "oklch(0.78 0.16 75)"
+    : "var(--primary)";
+  return (
+    <div
+      title={`~${tokens} tokens · ${Math.round(pct * 100)}% of context`}
+      className="grid place-items-center"
+    >
+      <svg width="28" height="28" viewBox="0 0 28 28" className="-rotate-90">
+        <circle cx="14" cy="14" r={r} fill="none" stroke="oklch(1 0 0 / 0.08)" strokeWidth="2.5" />
+        <circle
+          cx="14" cy="14" r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 240ms ease, stroke 240ms ease" }}
+        />
+      </svg>
     </div>
   );
 }
